@@ -62,6 +62,7 @@ const Project = () => {
     };
 
     function scrollToBottom() {
+
         if (messageBox.current) {
             messageBox.current.scrollTop = messageBox.current.scrollHeight;
         }
