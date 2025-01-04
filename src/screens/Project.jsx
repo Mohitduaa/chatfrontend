@@ -139,11 +139,11 @@ const Project = () => {
             <i className="ri-group-fill"></i>
             </button>
             </header>
-            <div className="conversation-area pt-14  flex-grow flex flex-col h-full relative ">
-                <div ref={messagebox} className="message-box p-1 flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
+            <div className="conversation-area pt-12   flex flex-col h-full relative ">
+                <div ref={messagebox} className="message-box p-1 flex-grow flex flex-col gap-1 overflow-y-auto max-h-full scrollbar-hide">
                  </div>
-                    <div className="inputfiled w-full flex">
-                        <input value={message} onChange={(e)=> setMessage(e.target.value)} className='p-2 px-4 boder-none outline-none flex-grow' type="text" placeholder='Enter message' />
+                    <div className="inputfiled w-full flex fixed bottom-0 left-0">
+                        <input value={message} onChange={(e)=> setMessage(e.target.value)} className='p-2 px-4 boder-none outline-none flex-grow ' type="text" placeholder='Enter message' />
                         <button onClick={send}  className=' px-6 bg-black text-white'><i class="ri-send-plane-fill"></i></button>
                     </div>
             </div>
