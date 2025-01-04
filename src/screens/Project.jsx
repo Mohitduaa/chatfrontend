@@ -11,9 +11,11 @@ const Project = () => {
     const [selectedUserId , setSelectedUserId] = useState([]) 
     const [project , setProject] = useState (location.state.project)
     const [message,setMessage] = useState('')
+
     const { user } = useContext(UserContext)
 
-    const messagebox = React.createRef();
+    const messageBox = React.createRef()
+
 
     const [users,setUsers] = useState([])
 
@@ -59,6 +61,11 @@ const Project = () => {
         }
     };
 
+    function scrollToBottom() {
+        if (messageBox.current) {
+            messageBox.current.scrollTop = messageBox.current.scrollHeight;
+        }
+    }
 
     useEffect(()=>{
         initializeSocket(project._id)
@@ -86,42 +93,53 @@ const Project = () => {
         const messageBox = document.querySelector('.message-box')
         const message = document.createElement('div')
         message.classList.add( 'incoming', 
-            'message', 
-            'flex', 
-            'flex-col', 
-            'p-2', 
-            'bg-green-300', 
-            'w-fit', 
-            'rounded-md', 
-            'mt-2', 
-            'mx-4',
+            'incoming',
+        'message',
+        'flex',
+        'flex-col',
+        'p-2',
+        'bg-green-300',
+        'w-fit',
+        'max-w-[80%]', // Limit width on smaller screens
+        'rounded-md',
+        'mt-2',
+        'mx-4',
+        'sm:mx-6', // Slightly more margin on small screens
+        'break-words' 
             )
         message.innerHTML = `
         <small class='opacity-65 text-xs'>${messageObject.sender.email}</small>
         <p class='text-sm'>${messageObject.message}</p>
         `
         messageBox.appendChild(message)
+        scrollToBottom()
+
     }
     function appendOutgoingMessage(message) {
         const messageBox = document.querySelector('.message-box');
         const newMessage = document.createElement('div');
         newMessage.classList.add(
-            'incoming', 
-            'message', 
-            'flex', 
-            'flex-col', 
-            'p-2', 
-            'bg-green-300', 
-            'w-fit', 
-            'rounded-md', 
-            'mt-2', 
-            'ml-[12rem]'
+            'outgoing',
+        'message',
+        'flex',
+        'flex-col',
+        'p-2',
+        'bg-green-300', 
+        'w-fit',
+        'max-w-[80%]', 
+        'rounded-md',
+        'mt-2',
+        'self-end', 
+        'sm:ml-auto',
+        'break-words'
         );
         newMessage.innerHTML = `
             <small class='opacity-65 text-xs'>${user.email}</small>
             <p class='text-sm'>${message}</p>
         `;
         messageBox.appendChild(newMessage);
+        scrollToBottom()
+
     }
     
    
@@ -139,10 +157,12 @@ const Project = () => {
             <i className="ri-group-fill"></i>
             </button>
             </header>
-            <div className="conversation-area pt-12 pb-5  flex flex-col h-full relative ">
-                <div ref={messagebox} className="message-box p-1 flex-grow flex flex-col gap-1 overflow-y-auto max-h-full scrollbar-hide">
+            <div className="conversation-area pt-12 pb-[5.5rem]  flex flex-col h-full relative ">
+                <div  ref={messageBox} className="message-box p-1  flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
+                
+                <div ref={messageBox}></div>
                  </div>
-                    <div className="inputfiled w-full flex fixed pb-5 bottom-0 left-0">
+                    <div className="inputfiled w-full flex fixed pb-7 bottom-0 left-0">
                         <input value={message} onChange={(e)=> setMessage(e.target.value)} className='p-2 px-4 boder-none outline-none flex-grow rounded-md mx-2 ' type="text" placeholder='Enter message' />
                         <button onClick={send}  className=' px-6 bg-black text-white rounded-md mx-1'><i className="ri-send-plane-fill"></i></button>
                     </div>
