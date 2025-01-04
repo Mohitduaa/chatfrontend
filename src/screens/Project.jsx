@@ -128,7 +128,7 @@ const Project = () => {
   return (
     <main className='h-screen w-screen flex '>
 
-        <section className='left relative flex flex-col h-full min-w-[22.5rem] md:min-w-96 bg-[#645a5a] '>
+        <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5a] '>
             <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 absolute z-10 top-0'>
             <button className='flex gap-2' onClick={() => setIsModalOpen(true)}> {/* Add onClick handler */}
             <i className="ri-add-fill"></i>
