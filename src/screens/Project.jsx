@@ -15,14 +15,16 @@ const Project = () => {
     const { user } = useContext(UserContext)
 
     const messageBox = React.createRef()
+    const messageBoxRef = useRef(null);
+    const inputRef = useRef(null); 
+
 
 
     const [users,setUsers] = useState([])
 
     const addCollaborators = () => {
-        // Assuming you have an API endpoint to add collaborators
         axios.put("/projects/add-user", { 
-            projectId: location.state.project._id, // Assuming you pass project ID in location state
+            projectId: location.state.project._id, 
             users: Array.from(selectedUserId) 
         })
         .then(res => {
@@ -58,6 +60,8 @@ const Project = () => {
             });
             appendOutgoingMessage(message);
             setMessage('');
+            inputRef.current.focus();
+
         }
     };
 
@@ -71,9 +75,14 @@ const Project = () => {
     useEffect(()=>{
         initializeSocket(project._id)
 
+        const messageBox = messageBoxRef.current; 
+        if (messageBox) {
+          messageBox.scrollTop = messageBox.scrollHeight;
+        }
         receiveMessage('project-message',data =>{
             console.log(data);
             appendIncomingMessage(data)
+            scrollToBottom()
             
         })
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res =>{
@@ -85,7 +94,7 @@ const Project = () => {
         }).catch(err =>{
             console.log(err)
         })
-    },[project._id])
+    },[project._id],message)
 
     
 
@@ -101,11 +110,11 @@ const Project = () => {
         'p-2',
         'bg-green-300',
         'w-fit',
-        'max-w-[80%]', // Limit width on smaller screens
+        'max-w-[80%]',
         'rounded-md',
         'mt-2',
         'mx-4',
-        'sm:mx-6', // Slightly more margin on small screens
+        'sm:mx-6', 
         'break-words' 
             )
         message.innerHTML = `
@@ -113,6 +122,8 @@ const Project = () => {
         <p class='text-sm'>${messageObject.message}</p>
         `
         messageBox.appendChild(message)
+        messageBox.scrollTop = messageBox.scrollHeight; 
+
         scrollToBottom()
 
     }
@@ -139,6 +150,8 @@ const Project = () => {
             <p class='text-sm'>${message}</p>
         `;
         messageBox.appendChild(newMessage);
+        messageBox.scrollTop = messageBox.scrollHeight; // Scroll to bottom
+
         scrollToBottom()
 
     }
@@ -149,7 +162,7 @@ const Project = () => {
 
         <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5a] '>
             <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 absolute z-10 top-0'>
-            <button className='flex gap-2' onClick={() => setIsModalOpen(true)}> {/* Add onClick handler */}
+            <button className='flex gap-2' onClick={() => setIsModalOpen(true)}>
             <i className="ri-add-fill"></i>
             <p>Add Members</p>
             </button>
@@ -164,7 +177,7 @@ const Project = () => {
                 <div ref={messageBox}></div>
                  </div>
                     <div className="inputfiled w-full flex fixed pb-7 bottom-0 left-0">
-                        <input value={message} onChange={(e)=> setMessage(e.target.value)} onKeyDown={(e) => {
+                        <input  ref={inputRef} value={message} onChange={(e)=> setMessage(e.target.value)} onKeyDown={(e) => {
         if (e.key === 'Enter') {
             e.preventDefault(); 
             send();
