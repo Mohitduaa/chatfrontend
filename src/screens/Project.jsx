@@ -161,7 +161,7 @@ const Project = () => {
     <main className='h-screen w-screen flex '>
 
         <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5a] '>
-            <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 absolute z-10 top-0'>
+            <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 fixed  z-10 top-0'>
             <button className='flex gap-2' onClick={() => setIsModalOpen(true)}>
             <i className="ri-add-fill"></i>
             <p>Add Members</p>
@@ -172,7 +172,7 @@ const Project = () => {
             </button>
             </header>
             <div className="conversation-area pt-12 pb-2  flex flex-col h-full relative ">
-                <div  ref={messageBox} className="message-box p-1  flex-grow flex flex-col gap-1 overflow-auto max-h-[80%] scrollbar-hide">
+                <div  ref={messageBox} className="message-box p-1 pb-20 flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
                 
                 <div ref={messageBox}></div>
                  </div>
