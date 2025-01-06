@@ -171,7 +171,7 @@ const Project = () => {
             <i className="ri-group-fill"></i>
             </button>
             </header>
-            <div className="conversation-area pt-12 pb-[5.5rem]  flex flex-col h-full relative ">
+            <div className="conversation-area pt-12 pb-2  flex flex-col h-full relative ">
                 <div  ref={messageBox} className="message-box p-1  flex-grow flex flex-col gap-1 overflow-auto max-h-[80%] scrollbar-hide">
                 
                 <div ref={messageBox}></div>
