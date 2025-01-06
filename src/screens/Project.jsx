@@ -172,11 +172,11 @@ const Project = () => {
             </button>
             </header>
             <div className="conversation-area pt-12 pb-[5.5rem]  flex flex-col h-full relative ">
-                <div  ref={messageBox} className="message-box p-1  flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
+                <div  ref={messageBox} className="message-box p-1  flex-grow flex flex-col gap-1 overflow-auto max-h-[80%] scrollbar-hide">
                 
                 <div ref={messageBox}></div>
                  </div>
-                    <div className="inputfiled w-full flex fixed pb-7 bottom-0 left-0">
+                    <div className="inputfiled w-full flex fixed pb-4 bottom-0 left-0">
                         <input  ref={inputRef} value={message} onChange={(e)=> setMessage(e.target.value)} onKeyDown={(e) => {
         if (e.key === 'Enter') {
             e.preventDefault(); 
