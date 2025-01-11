@@ -20,6 +20,7 @@ const Project = () => {
 
 
 
+
     const [users,setUsers] = useState([])
 
     const addCollaborators = () => {
@@ -71,6 +72,14 @@ const Project = () => {
             messageBox.current.scrollTop = messageBox.current.scrollHeight;
         }
     }
+    function formatTime(date) {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    }
+    
 
     useEffect(()=>{
         initializeSocket(project._id)
@@ -108,18 +117,25 @@ const Project = () => {
         'flex',
         'flex-col',
         'p-2',
-        'bg-green-300',
+        'bg-white',
         'w-fit',
         'max-w-[80%]',
         'rounded-md',
         'mt-2',
-        'mx-4',
+        'mx-2',
         'sm:mx-6', 
         'break-words' 
             )
+            const time = formatTime(new Date());
+
+
         message.innerHTML = `
-        <small class='opacity-65 text-xs'>${messageObject.sender.email}</small>
-        <p class='text-sm'>${messageObject.message}</p>
+        <small class='opacity-65 text-black text-xs'>${messageObject.sender.email}</small>
+        <div class='flex justify-between items-center'>
+        <p class='text-sm text-black'>${messageObject.message}</p>
+        <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
+        </div>
+
         `
         messageBox.appendChild(message)
         messageBox.scrollTop = messageBox.scrollHeight; 
@@ -136,7 +152,7 @@ const Project = () => {
         'flex',
         'flex-col',
         'p-2',
-        'bg-green-300', 
+        'bg-green-200', 
         'w-fit',
         'max-w-[80%]', 
         'rounded-md',
@@ -145,9 +161,16 @@ const Project = () => {
         'sm:ml-auto',
         'break-words'
         );
+        const time = formatTime(new Date());
+
+
         newMessage.innerHTML = `
             <small class='opacity-65 text-xs'>${user.email}</small>
+                    <div class='flex justify-between items-center'>
+
             <p class='text-sm'>${message}</p>
+         <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
+        </div>
         `;
         messageBox.appendChild(newMessage);
         messageBox.scrollTop = messageBox.scrollHeight; // Scroll to bottom
@@ -160,7 +183,7 @@ const Project = () => {
   return (
     <main className='h-screen w-screen flex '>
 
-        <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5a] '>
+        <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5aab] '>
             <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 fixed  z-10 top-0'>
             <button className='flex gap-2' onClick={() => setIsModalOpen(true)}>
             <i className="ri-add-fill"></i>
@@ -172,17 +195,17 @@ const Project = () => {
             </button>
             </header>
             <div className="conversation-area pt-12 pb-2  flex flex-col h-full relative ">
-                <div  ref={messageBox} className="message-box p-1 pb-20 flex-grow flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
+                <div  ref={messageBox} className="message-box p-1 pb-20  flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
                 
                 <div ref={messageBox}></div>
                  </div>
-                    <div className="inputfiled w-full flex fixed pb-4 bottom-0 left-0">
+                    <div className="inputfiled w-full flex fixed  pb-3 py-3 bottom-0 left-0 bg-white">
                         <input  ref={inputRef} value={message} onChange={(e)=> setMessage(e.target.value)} onKeyDown={(e) => {
         if (e.key === 'Enter') {
             e.preventDefault(); 
             send();
         }
-    }} className='p-2 px-4 boder-none outline-none flex-grow rounded-md mx-2 ' type="text" placeholder='Enter message' />
+    }} className='p-2 px-4 boder-none outline-none flex-grow rounded-md mx-2 border placeholder-[#a8a1a1] ' type="text" placeholder='Enter message' />
                         <button onClick={send}  className=' px-6 bg-black text-white rounded-md mx-1'><i className="ri-send-plane-fill"></i></button>
                     </div>
             </div>
@@ -217,7 +240,7 @@ const Project = () => {
         {isModalOpen && (
                 <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center">
                     <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
-                        <header className='flex justify-between items-center mb-4'>
+                        <header className='flex justify-between items-center mb-4 mx-3'>
                             <h2 className='text-xl font-semibold'>Select User</h2>
                             <button onClick={() => setIsModalOpen(false)} className='p-2'>
                                 <i className="ri-close-fill"></i>
