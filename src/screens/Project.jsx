@@ -97,12 +97,26 @@ const Project = () => {
         axios.get(`/projects/get-project/${location.state.project._id}`).then(res =>{
             setProject(res.data.project)
         })
-
         axios.get('/users/all').then(res=>{
             setUsers(res.data.users)
         }).catch(err =>{
             console.log(err)
         })
+        const handleFocus = () => {
+            document.body.style.overflow = 'hidden';
+        };
+        const handleBlur = () => {
+            document.body.style.overflow = '';
+        };
+
+        inputRef.current?.addEventListener('focus', handleFocus);
+        inputRef.current?.addEventListener('blur', handleBlur);
+
+        return () => {
+            inputRef.current?.removeEventListener('focus', handleFocus);
+            inputRef.current?.removeEventListener('blur', handleBlur);
+        };
+
     },[project._id],message)
 
     
