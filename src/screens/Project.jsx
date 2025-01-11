@@ -102,19 +102,16 @@ const Project = () => {
         }).catch(err =>{
             console.log(err)
         })
-        const handleFocus = () => {
-            document.body.style.overflow = 'hidden';
-        };
-        const handleBlur = () => {
-            document.body.style.overflow = '';
+        const updateViewportHeight = () => {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
         };
 
-        inputRef.current?.addEventListener('focus', handleFocus);
-        inputRef.current?.addEventListener('blur', handleBlur);
+        window.addEventListener('resize', updateViewportHeight);
+        updateViewportHeight();
 
         return () => {
-            inputRef.current?.removeEventListener('focus', handleFocus);
-            inputRef.current?.removeEventListener('blur', handleBlur);
+            window.removeEventListener('resize', updateViewportHeight);
         };
 
     },[project._id],message)
@@ -145,7 +142,7 @@ const Project = () => {
 
         message.innerHTML = `
         <small class='opacity-65 text-black text-xs'>${messageObject.sender.email}</small>
-        <div class='flex justify-between items-center'>
+        <div class='flex justify-between gap-2 items-center'>
         <p class='text-sm text-black'>${messageObject.message}</p>
         <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
         </div>
@@ -180,7 +177,7 @@ const Project = () => {
 
         newMessage.innerHTML = `
             <small class='opacity-65 text-xs'>${user.email}</small>
-                    <div class='flex justify-between items-center'>
+                    <div class='flex justify-between gap-2 items-center'>
 
             <p class='text-sm'>${message}</p>
          <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
@@ -213,7 +210,7 @@ const Project = () => {
                 
                 <div ref={messageBox}></div>
                  </div>
-                    <div className="inputfiled w-full flex fixed  pb-3 py-3 bottom-0 left-0 bg-white">
+                    <div className="inputfiled w-full flex fixed  pb-3 py-3 bottom-0 left-0 bg-white" style={{ height: `calc(var(--vh, 1vh) * 10)` }}>
                         <input  ref={inputRef} value={message} onChange={(e)=> setMessage(e.target.value)} onKeyDown={(e) => {
         if (e.key === 'Enter') {
             e.preventDefault(); 

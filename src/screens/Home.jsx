@@ -40,18 +40,20 @@ const Home = () => {
   <div className='projects flex flex-wrap gap-3'>
   <button
   onClick={()=> setIsModalOpen(true)} 
-   className='project p-4 border border-late-300 rounded-md'>
+   className='project font-medium p-4 border border-late-300 rounded-md'>
   New Project
-  <i className="ri-link ml-2"></i>
+  <i className="ri-link ml-2 text-black"></i>
   </button>
   {
     project.map((project)=>(
       <div key={project._id} onClick={()=>{navigate(`/project`,{ state:{project}})}} className='project cursor-pointer p-4 border border-slate'>
-      <h2>{project.name}</h2>
+      <h2 className='text-black text-xl font-medium'>{project.name}</h2>
       <div/>
-      <div className='flex gap-2'>
-      <p><i className="ri-user-line"></i>Collaborator</p>
-      {project.users.length}</div>
+      <div className='flex gap-1'>
+      <p><i className="ri-user-line"></i></p>
+      {project.users.length}
+      <p className='text-black'>Collaborator</p>
+      </div>
       </div>
     ))
   }
@@ -59,11 +61,11 @@ const Home = () => {
   {isModalOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-white p-6 rounded-md shadow-md md:w-1/3">
-                        <h2 className="text-xl mb-4">Create New Project</h2>
+                        <h2 className="text-xl font-medium mb-4">Create New Project</h2>
                         <form onSubmit={createProject}>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Project Name</label>
-                                <input
+                                <label className="block text-xl font-medium text-black">Project Name</label>
+                                <input placeholder='Enter name'
                                     onChange={(e) => setProjectName(e.target.value)}
                                     value={projectName}
                                     type="text" className="mt-1 block w-full p-2 border border-gray-300 rounded-md" required />
