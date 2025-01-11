@@ -205,7 +205,8 @@ const Project = () => {
             <i className="ri-group-fill"></i>
             </button>
             </header>
-            <div className="conversation-area pt-12 pb-2  flex flex-col h-full relative ">
+            <div className='h-full'  style={{ backgroundImage: "url('images/two.png')", backgroundSize: 'cover', }} >
+            <div className="conversation-area pt-12 pb-2  flex flex-col h-full fixed relative ">
                 <div  ref={messageBox} className="message-box p-1 pb-20  flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide">
                 
                 <div ref={messageBox}></div>
@@ -219,6 +220,7 @@ const Project = () => {
     }} className='p-2 px-4 boder-none outline-none flex-grow rounded-md mx-2 border placeholder-[#a8a1a1] ' type="text" placeholder='Enter message' />
                         <button onClick={send}  className=' px-6 bg-black text-white rounded-md mx-1'><i className="ri-send-plane-fill"></i></button>
                     </div>
+            </div>
             </div>
             <div className={`sidePannel w-full h-full flex flex-col gap-2 p-2  bg-green-200 absolute transition-all  top-0 ${isSidePanelOpen?'translate-x-0':'-translate-x-full'}`}>
                  <header className='flex justify-between items-center p-2 px-3 bg-slate-200'>
@@ -250,7 +252,7 @@ const Project = () => {
         </section>
         {isModalOpen && (
                 <div className="fixed inset-0  bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-md w-96 max-w-full relative">
+                    <div className="bg-white mx-8 p-4 rounded-md w-96 max-w-full relative">
                         <header className='flex justify-between items-center mb-4 mx-3'>
                             <h2 className='text-xl font-semibold'>Select User</h2>
                             <button onClick={() => setIsModalOpen(false)} className='p-2'>
