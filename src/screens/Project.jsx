@@ -137,7 +137,20 @@ const Project = () => {
     function appendOutgoingMessage(message) {
         const messageBox = document.querySelector('.message-box');
         const newMessage = document.createElement('div');
-        newMessage.classList.add('outgoing', 'message', 'flex', 'flex-col', 'p-2', 'bg-green-200', 'w-fit', 'max-w-[80%]', 'rounded-md', 'mt-2', 'self-end', 'sm:ml-auto', 'break-words');
+        newMessage.classList.add(
+            'outgoing',
+             'message',
+            'flex', 
+            'flex-col',
+             'p-2',
+            'bg-green-200', 
+            'w-fit', 
+            'max-w-[80%]', 
+             'rounded-md', 
+            'mt-2', 
+             'self-end', 
+                'sm:ml-auto', 
+                'break-words');
 
         const time = formatTime(new Date());
         newMessage.dataset.id = Date.now();

@@ -37,23 +37,42 @@ const Home = () => {
 
   return (
     <main className='p-4'>
-  <div className='projects flex flex-wrap gap-3'>
+    <h1 className='text-4xl font-bold py-2 pb-6'>Workspaces</h1>
+  <div className='projects flex  flex-wrap gap-3'>
+  <div className='flex items-center  gap-2 border border-late-300 rounded-md p-4'>
+  <div>
+
+ <i className="ri-add-line text-black bg-gray-300 p-4 rounded-md "></i>
+  </div>
+  <div>
+
   <button
   onClick={()=> setIsModalOpen(true)} 
-   className='project font-medium p-4 border border-late-300 rounded-md'>
-  New Project
-  <i className="ri-link ml-2 text-black"></i>
+   className='project font-medium '>
+New Project
   </button>
+  <p className='text-gray-600'>Start a fresh workspace</p>
+  </div>
+  </div>
   {
     project.map((project)=>(
-      <div key={project._id} onClick={()=>{navigate(`/project`,{ state:{project}})}} className='project cursor-pointer p-4 border border-slate'>
-      <h2 className='text-black text-xl font-medium'>{project.name}</h2>
+      <div key={project._id} onClick={()=>{navigate(`/project`,{ state:{project}})}} className='project cursor-pointer  '>
+      <div className='flex items-center  gap-2 border border-late-300 rounded-md p-4'>
+      <div>
+      <i className="ri-chat-3-fill text-blue-400 text-4xl bg-gray-300 p-2 rounded-md "></i>
+        </div>
+        <div>
+        <h2 className='text-black text-xl font-medium'>{project.name}</h2>
       <div/>
       <div className='flex gap-1'>
       <p><i className="ri-user-line"></i></p>
       {project.users.length}
-      <p className='text-black'>Collaborator</p>
+      <p className='text-black'>Members</p>
       </div>
+        </div>
+      </div>
+
+      
       </div>
     ))
   }
