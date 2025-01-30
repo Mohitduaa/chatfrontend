@@ -1,271 +1,315 @@
 import React, { useEffect, useState, useContext, useRef } from 'react';
 import { UserContext } from '../contex/user.contex';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import axios from '../Config/axios';
 import { initializeSocket, receiveMessage, sendMessage } from '../Config/socket';
 import { useSwipeable } from 'react-swipeable';
 
+// Global helper function for time formatting
+const formatTime = (date) => {
+  if (!(date instanceof Date)) return '';
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const formattedHours = (hours % 12 || 12).toString();
+  return `${formattedHours}:${minutes} ${ampm}`;
+};
+
+// Message Component
+const Message = ({ message: msg, user, setReplyingTo }) => {
+  const swipeHandlers = useSwipeable({
+    onSwipedRight: () => {
+      setReplyingTo(msg.message);
+    },
+    trackMouse: true
+  });
+
+  return (
+    <div
+      {...swipeHandlers}
+      className={`message flex flex-col p-2 w-fit max-w-[80%] rounded-md mt-2 mx-2 sm:mx-6 break-words ${
+        msg.type === 'outgoing' 
+          ? 'bg-green-200 self-end sm:ml-auto' 
+          : 'bg-white'
+      }`}
+    >
+      <small className='opacity-65 text-black text-xs'>
+        {msg.type === 'outgoing' ? user.email : msg.sender?.email}
+      </small>
+      {msg.replyTo && (
+        <p className="text-sm p-2 rounded-md shadow-md bg-gray-100">
+          {msg.replyTo}
+        </p>
+      )}
+      <div className='flex justify-between gap-2 items-center'>
+        <p className='text-sm text-black'>{msg.message}</p>
+        <small className='opacity-65 text-xs self-end mt-1'>
+          {formatTime(msg.timestamp)}
+        </small>
+      </div>
+    </div>
+  );
+};
+
+// Main Project Component
 const Project = () => {
-    const location = useLocation();
-    const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedUserId, setSelectedUserId] = useState([]);
-    const [project, setProject] = useState(location.state?.project || {});
-    const [message, setMessage] = useState('');
-    // const [reactions, setReactions] = useState({});
-    const [users, setUsers] = useState([]);
-    const [replyingTo, setReplyingTo] = useState(null); 
-    const { user } = useContext(UserContext);
+  const location = useLocation();
+  const { user } = useContext(UserContext);
+  const messageBoxRef = useRef(null);
+  const inputRef = useRef(null);
+  
+  const [messages, setMessages] = useState([]);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(new Set());
+  const [project, setProject] = useState(location.state?.project || {});
+  const [users, setUsers] = useState([]);
+  const [messageInput, setMessageInput] = useState('');
+  const [replyingTo, setReplyingTo] = useState(null);
 
-    const messageBoxRef = useRef(null);
-    const inputRef = useRef(null);
-
-    const addCollaborators = () => {
-        axios.put('/projects/add-user', {
-            projectId: project._id,
-            users: Array.from(selectedUserId),
-        })
-            .then((res) => {
-                console.log(res.data);
-                setIsModalOpen(false);
-            })
-            .catch((err) => {
-                console.log(err);
-            });
-    };
-
-    const handelUserClick = (id) => {
-        setSelectedUserId((preSelectedUserId) => {
-            const newSelectedUserId = new Set(preSelectedUserId);
-            if (newSelectedUserId.has(id)) {
-                newSelectedUserId.delete(id);
-            } else {
-                newSelectedUserId.add(id);
-            }
-            return newSelectedUserId;
-        });
-    };
-
-    const send = () => {
-        if (message.trim()) {
-            sendMessage('project-message', {
-                message,
-                sender: user,
-                replyTo: replyingTo,
-            });
-            appendOutgoingMessage({ message, replyTo: replyingTo });
-            setMessage('');
-            setReplyingTo(null);
-            inputRef.current.focus();
+  // Request notification permission on component mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          console.log('Notification permission granted.');
         }
-    };
-
-    function scrollToBottom() {
-        if (messageBoxRef.current) {
-            messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-        }
+      });
     }
+  }, []);
 
-    function formatTime(date) {
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const formattedHours = hours % 12 || 12;
-        return `${formattedHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  // Show notification when a new message arrives
+  const showNotification = (message) => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('New Message', {
+        body: `${message.sender?.email || 'Someone'}: ${message.message}`,
+        icon: '/image1.webp', // Add an icon if needed
+      });
     }
+  };
 
-    useEffect(() => {
-        initializeSocket(project._id);
+  // Socket and data initialization
+  useEffect(() => {
+    initializeSocket(project._id);
+    
+    receiveMessage('project-message', (data) => {
+      const newMessage = {
+        ...data,
+        type: 'incoming',
+        id: Date.now(),
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, newMessage]);
+      scrollToBottom();
 
-        receiveMessage('project-message', (data) => {
-            appendIncomingMessage(data);
-            scrollToBottom();
-        });
-
-        axios.get(`/projects/get-project/${project._id}`).then((res) => {
-            setProject(res.data.project);
-        });
-
-        axios.get('/users/all').then((res) => {
-            setUsers(res.data.users);
-        }).catch((err) => {
-            console.log(err);
-        });
-
-        const updateViewportHeight = () => {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-
-        window.addEventListener('resize', updateViewportHeight);
-        updateViewportHeight();
-
-        return () => {
-            window.removeEventListener('resize', updateViewportHeight);
-        };
-    }, [project._id]);
-
-    
-    
-    function appendIncomingMessage(messageObject) {
-        const messageBox = document.querySelector('.message-box');
-        const message = document.createElement('div');
-        message.classList.add('incoming', 'message', 'flex', 'flex-col', 'p-2', 'bg-white', 'w-fit', 'max-w-[80%]', 'rounded-md', 'mt-2', 'mx-2', 'sm:mx-6', 'break-words');
-    
-        const time = formatTime(new Date());
-        message.dataset.id = messageObject.id;
-        message.dataset.message = messageObject.message; 
-        message.innerHTML = `
-            <small class='opacity-65 text-black text-xs'>${messageObject.sender.email}</small>
-            <div class='flex justify-between gap-2 items-center'>
-                <p class='text-sm text-black'>${messageObject.message}</p>
-                <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
-            </div>
-        `;
-    
-        messageBox.appendChild(message);
-        scrollToBottom();
-    }
-    
-    function appendOutgoingMessage({ message, replyTo }) {
-        const messageBox = document.querySelector('.message-box');
-        const newMessage = document.createElement('div');
-        newMessage.classList.add(
-            'outgoing',
-            'message',
-            'flex',
-            'flex-col',
-            'p-2',
-            'bg-green-200',
-            'w-fit',
-            'max-w-[80%]',
-            'rounded-md',
-            'mt-2',
-            'self-end',
-            'sm:ml-auto',
-            'break-words'
-        );
-    
-        const time = formatTime(new Date());
-        newMessage.dataset.id = Date.now();
-        newMessage.dataset.message = message;
-        newMessage.innerHTML = `
-            <small class='opacity-65 text-xs'>${user.email}</small>
-            ${
-                replyTo
-                    ? `<p class="text-sm p-2 rounded-md shadow-md bg-gray-100">${replyTo}</p>`
-                    : ''
-            }
-            <div class='flex justify-between gap-2 items-center'>
-                <p class='text-sm'>${message}</p>
-                <small class='opacity-65 text-xs self-end mt-1'>${time}</small>
-            </div>
-        `;
-    
-        messageBox.appendChild(newMessage);
-        scrollToBottom();
-    }
-    
-    const swipeHandlers = useSwipeable({
-        onSwipedRight: (eventData) => {
-            const replyToMessage = eventData.event.target.closest('.message')?.dataset.message; 
-            if (replyToMessage) {
-                setReplyingTo(replyToMessage); 
-            } else {
-                console.log('No message found to reply to');
-            }
-        },
+      // Show notification for new incoming messages
+      if (data.sender._id !== user._id) { // Avoid notifications for your own messages
+        showNotification(newMessage);
+      }
     });
-    return (
-        <main className='h-screen w-screen flex'>
-            <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5aab]' {...swipeHandlers}>
-                <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 fixed z-10 top-0'>
-                    <button className='flex gap-2' onClick={() => setIsModalOpen(true)}>
-                        <i className="ri-add-fill"></i>
-                        <p>Add Members</p>
-                    </button>
-                    <button className='p-2' onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
-                        <i className="ri-group-fill"></i>
-                    </button>
-                </header>
-                <div className='h-full' style={{ backgroundImage: "url('images/two.png')", backgroundSize: 'cover' }}>
-                    <div className="conversation-area pt-12 pb-2 flex flex-col h-full fixed relative">
-                        <div ref={messageBoxRef} className="message-box p-1 pb-20 flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide"></div>
-                        {replyingTo && (
-                            <div className="reply-preview absolute bottom-[6rem] left-0 w-full p-2 bg-gray-200 flex justify-between items-center z-20"
-                           >
-                            <p className='font-normal'>{replyingTo}</p>
-                             <button onClick={() => setReplyingTo(null)} className="text-black">X</button>
-                               </div>
-                                   )}
-                       <div className="inputfiled w-full flex fixed pb-3 py-3 bottom-0 left-0 bg-white" style={{ height: `calc(var(--vh, 1vh) * 10)` }}>
-                            <input ref={inputRef} value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        send();
-                                    }
-                                }}
-                                className='p-2 px-4 boder-none outline-none flex-grow rounded-md mx-2 border placeholder-[#a8a1a1]'
-                                type="text"
-                                placeholder='Enter message'
-                            />
-                            <button onClick={send} className='px-6 bg-black text-white rounded-md mx-1'>
-                                <i className="ri-send-plane-fill"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div className={`sidePannel w-full h-full flex flex-col gap-2 p-2 bg-green-200 absolute transition-all top-0 ${isSidePanelOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-                    <header className='flex justify-between items-center p-2 px-3 bg-slate-200'>
-                        <h1>Collabrators</h1>
-                        <button onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}>
-                            <i className="ri-close-fill"></i>
-                        </button>
-                    </header>
-                    <div className="users flex flex-col gap-2">
-                        {users.map((user) => (
-                            <div key={user._id} className="user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center">
-                                <div className='aspect-square rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600'>
-                                    <i className="ri-user-fill absolute"></i>
-                                </div>
-                                <h1 className='font-semibold text-lg text-black'>{user.email}</h1>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center">
-                    <div className="bg-white mx-8 p-4 rounded-md w-96 max-w-full relative">
-                        <header className='flex justify-between items-center mb-4 mx-3'>
-                            <h2 className='text-xl font-semibold'>Select User</h2>
-                            <button onClick={() => setIsModalOpen(false)} className='p-2'>
-                                <i className="ri-close-fill"></i>
-                            </button>
-                        </header>
-                        <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
-                            {users.map(user => (
-                                <div
-                                    key={user._id}
-                                    className={`user cursor-pointer hover:bg-slate-200 p-2 flex gap-2 items-center 
-                                       ${Array.from(selectedUserId).indexOf(user._id) !== -1 ? 'bg-slate-200' : ''}`}
-                                    onClick={() => handelUserClick(user._id)}
-                                >
-                                    <div className='aspect-square relative rounded-full w-fit h-fit flex items-center justify-center p-5 text-white bg-slate-600'>
-                                        <i className="ri-user-fill absolute"></i>
-                                    </div>
-                                    <h1 className='font-semibold text-lg'>{user.email}</h1>
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={addCollaborators} className='absolute bottom-4 left-1/2 transform -translate-x-1/2 px-4 py-2 bg-blue-600 text-white rounded-md'>
-                            Add Collaborators
-                        </button>
-                    </div>
-                </div>
+
+    const fetchData = async () => {
+      try {
+        const projectRes = await axios.get(`/projects/get-project/${project._id}`);
+        setProject(projectRes.data.project);
+        
+        const usersRes = await axios.get('/users/all');
+        setUsers(usersRes.data.users);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchData();
+  }, [project._id, user._id]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const sendMessageHandler = () => {
+    if (messageInput.trim()) {
+      const newMessage = {
+        message: messageInput,
+        sender: user,
+        replyTo: replyingTo,
+        type: 'outgoing',
+        id: Date.now(),
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+      sendMessage('project-message', newMessage);
+      setMessageInput('');
+      setReplyingTo(null);
+      inputRef.current.focus();
+    }
+  };
+
+  const handleAddCollaborators = async () => {
+    try {
+      await axios.put('/projects/add-user', {
+        projectId: project._id,
+        users: Array.from(selectedUserId),
+      });
+      setIsModalOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUserSelect = (id) => {
+    setSelectedUserId(prev => {
+      const newSet = new Set(prev);
+      newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const scrollToBottom = () => {
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  };
+
+  return (
+    <main className='h-screen w-screen flex'>
+      {/* Chat Section */}
+      <section className='left relative flex flex-col h-full w-full md:min-w-96 bg-[#645a5aab]'>
+        <header className='flex justify-between items-center p-2 px-4 w-full bg-slate-100 fixed z-10 top-0'>
+          <button 
+            className='flex gap-2 items-center'
+            onClick={() => setIsModalOpen(true)}
+          >
+            <i className="ri-add-fill"></i>
+            <span>Add Members</span>
+          </button>
+          <button 
+            className='p-2'
+            onClick={() => setIsSidePanelOpen(!isSidePanelOpen)}
+          >
+            <i className="ri-group-fill"></i>
+          </button>
+        </header>
+
+        {/* Messages Container */}
+        <div className='h-full' style={{ backgroundImage: "url('images/two.png')", backgroundSize: 'cover' }}>
+          <div className="conversation-area pt-12 pb-2 flex flex-col h-full fixed relative">
+            <div 
+              ref={messageBoxRef} 
+              className="message-box p-1 pb-20 flex flex-col gap-1 overflow-auto max-h-full scrollbar-hide"
+            >
+              {messages.map((msg) => (
+                <Message 
+                  key={msg.id} 
+                  message={msg} 
+                  user={user}
+                  setReplyingTo={setReplyingTo}
+                />
+              ))}
+            </div>
+
+            {/* Reply Preview */}
+            {replyingTo && (
+              <div className="reply-preview absolute bottom-[6rem] left-0 w-full p-2 bg-gray-200 flex justify-between items-center z-20">
+                <p className='font-normal truncate'>{replyingTo}</p>
+                <button 
+                  onClick={() => setReplyingTo(null)} 
+                  className="text-black px-2 hover:bg-gray-300 rounded"
+                >
+                  ×
+                </button>
+              </div>
             )}
-        </main>
-    );
+
+            {/* Message Input */}
+            <div className="input-field w-full flex fixed pb-3 py-3 bottom-0 left-0 bg-white">
+              <input
+                ref={inputRef}
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && sendMessageHandler()}
+                className='p-2 px-4 border-none outline-none flex-grow rounded-md mx-2 placeholder-[#a8a1a1]'
+                type="text"
+                placeholder='Enter message'
+              />
+              <button 
+                onClick={sendMessageHandler}
+                className='px-6 bg-black text-white rounded-md mx-1 hover:bg-gray-800 transition-colors'
+              >
+                <i className="ri-send-plane-fill"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Collaborators Side Panel */}
+        <div className={`side-panel w-full h-full flex flex-col gap-2 p-2 bg-green-200 absolute transition-transform top-0 ${
+          isSidePanelOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <header className='flex justify-between items-center p-2 px-3 bg-slate-200'>
+            <h1 className='font-semibold'>Collaborators</h1>
+            <button 
+              onClick={() => setIsSidePanelOpen(false)}
+              className='p-1 hover:bg-gray-300 rounded'
+            >
+              <i className="ri-close-fill"></i>
+            </button>
+          </header>
+          <div className="users flex flex-col gap-2 overflow-auto">
+            {users.map((user) => (
+              <div key={user._id} className="user p-2 flex gap-2 items-center hover:bg-slate-200">
+                <div className='w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white'>
+                  <i className="ri-user-fill"></i>
+                </div>
+                <h1 className='font-semibold text-black'>{user.email}</h1>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Add Collaborators Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white mx-4 p-4 rounded-md w-96 max-w-full relative">
+            <header className='flex justify-between items-center mb-4'>
+              <h2 className='text-xl font-semibold'>Select Collaborators</h2>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className='p-2 hover:bg-gray-100 rounded'
+              >
+                <i className="ri-close-fill"></i>
+              </button>
+            </header>
+            <div className="users-list flex flex-col gap-2 mb-16 max-h-96 overflow-auto">
+              {users.map(user => (
+                <div
+                  key={user._id}
+                  onClick={() => handleUserSelect(user._id)}
+                  className={`user p-2 flex gap-2 items-center cursor-pointer rounded ${
+                    selectedUserId.has(user._id) ? 'bg-slate-200' : 'hover:bg-slate-100'
+                  }`}
+                >
+                  <div className='w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white'>
+                    <i className="ri-user-fill"></i>
+                  </div>
+                  <h1 className='font-semibold'>{user.email}</h1>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleAddCollaborators}
+              className='w-full py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors'
+            >
+              Add Selected Users
+            </button>
+          </div>
+        </div>
+      )}
+    </main>
+  );
 };
 
 export default Project;
