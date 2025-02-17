@@ -15,7 +15,6 @@ const formatTime = (date) => {
   return `${formattedHours}:${minutes} ${ampm}`;
 };
 
-// Message Component
 const Message = ({ message: msg, user, setReplyingTo }) => {
   const swipeHandlers = useSwipeable({
     onSwipedRight: () => {

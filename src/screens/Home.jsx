@@ -45,8 +45,8 @@ const Home = () => {
   }, []);
 
   return (
-    <main className='p-4'>
-    <div className='flex justify-between items-center'>
+    <main className='p-4 '>
+    <div className='flex justify-between items-center '>
       <div>
       <h1 className='text-4xl font-bold py-2 pb-6'>Workspaces</h1>
       </div>
